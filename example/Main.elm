@@ -21,25 +21,16 @@ jsonify m =
 
         err -> ""
 
+type alias Model = {}
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg _ =
     case msg of
         ParseElm s -> (Model, replyJsonAst (jsonify s))
 
-
-type alias Model = {}
-init : (Model, Cmd Msg)
-init = (Model, Cmd.none)
-
-view : Model -> Html Msg
-view _ = div [] []
-
-subscriptions : Model -> Sub Msg
-subscriptions _ = parseElmCode ParseElm
-
 main : Program Never
 main = App.program {
-    init = init,
-    view = view,
+    init = \_ -> (Model, Cmd.none),
+    view = \_ -> div [] [],
     update = update,
-    subscriptions = subscriptions}
+    subscriptions = \_ -> parseElmCode ParseElm}
