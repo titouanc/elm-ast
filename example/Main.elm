@@ -1,101 +1,45 @@
-module Main exposing (main)
+port module Main exposing (..)
 
-import Ast
-import Ast.Expression exposing (..)
-import Ast.Statement exposing (..)
 import Html exposing (..)
 import Html.App as App
-import Html.Events exposing (..)
-import Json.Decode as JD
 
+import Ast
+import Ast2Json
+import Json.Encode
+import Json.Decode
 
-type Msg
-    = Replace String
+type Msg = ParseElm String
 
+port replyJsonAst : String -> Cmd msg
+port parseElmCode : (String -> msg) -> Sub msg
 
-init : String
-init =
-    """module Main exposing (..)
-
-f : Int -> Int
-f x = x + 1
-
-g : Int -> Int
-g x = x * 2
-
-h = f << g
-"""
-
-
-update : Msg -> String -> String
-update action model =
-    case action of
-        Replace m ->
-            m
-
-
-withChild : a -> List (Html Msg) -> Html Msg
-withChild title children =
-    li []
-        [ pre [] [ text <| toString title ]
-        , ul [] children
-        ]
-
-
-expression : Expression -> Html Msg
-expression e =
-    case e of
-        Range e1 e2 ->
-            withChild e
-                [ expression e1
-                , expression e2
-                ]
-
-        List es ->
-            withChild e (List.map expression es)
-
-        Application e1 e2 ->
-            withChild e
-                [ expression e1
-                , expression e2
-                ]
-
-        e ->
-            li [] [ pre [] [ text <| toString e ] ]
-
-
-statement : Statement -> Html Msg
-statement s =
-    case s of
-        FunctionDeclaration _ _ e ->
-            withChild s [ expression e ]
-
-        s ->
-            li [] [ pre [] [ text <| toString s ] ]
-
-
-tree : String -> Html Msg
-tree m =
+jsonify : String -> String
+jsonify m =
     case Ast.parse m of
-        ( Ok statements, _ ) ->
-            ul [] (List.map statement statements)
+        ( Ok statements, _ ) -> 
+            Json.Encode.encode 2 (Ast2Json.jmap Ast2Json.statement statements)
 
-        err ->
-            div [] [ text <| toString err ]
+        err -> ""
+
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg _ =
+    case msg of
+        ParseElm s -> (Model, replyJsonAst (jsonify s))
 
 
-view : String -> Html Msg
-view model =
-    div []
-        [ textarea [ on "input" (JD.map Replace targetValue) ] [ text model ]
-        , tree model
-        ]
+type alias Model = {}
+init : (Model, Cmd Msg)
+init = (Model, Cmd.none)
 
+view : Model -> Html Msg
+view _ = div [] []
+
+subscriptions : Model -> Sub Msg
+subscriptions _ = parseElmCode ParseElm
 
 main : Program Never
-main =
-    App.beginnerProgram
-        { model = init
-        , update = update
-        , view = view
-        }
+main = App.program {
+    init = init,
+    view = view,
+    update = update,
+    subscriptions = subscriptions}

@@ -13,9 +13,28 @@
     </style>
   </head>
   <body>
+    <textarea id="the-input">
+      myMap : (a -> b) -> List a -> List b
+      myMap = List.map
+    </textarea>
+    <pre id="the-output"></pre>
     <script src="elm.js"></script>
     <script>
-      Elm.Main.fullscreen();
+      var elm = Elm.Main.fullscreen();
+      var inp = document.getElementById('the-input');
+      var out = document.getElementById('the-output');
+
+      /* When an Elm snippet has been parsed, output JSON repr to the <pre> */
+      elm.ports.replyJsonAst.subscribe(function (reply){
+        out.innerHTML = reply;
+      });
+
+      /* When the textarea changes, call Elm parser */
+      inp.addEventListener('keyup', function(){
+        elm.ports.parseElmCode.send(this.value);
+      });
+
+      elm.ports.parseElmCode.send(inp.value);
     </script>
   </body>
 </html>
