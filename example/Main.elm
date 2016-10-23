@@ -30,7 +30,7 @@ update msg _ =
 
 main : Program Never
 main = App.program {
-    init = \_ -> (Model, Cmd.none),
+    init = (Model, Cmd.none),
     view = \_ -> div [] [],
     update = update,
     subscriptions = \_ -> parseElmCode ParseElm}
